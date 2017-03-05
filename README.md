@@ -10,5 +10,8 @@ The solution uses [Iterative Deepening A* (IDA*)](https://en.wikipedia.org/wiki/
 # Dependencies
 - [ncurses 6.0](https://www.gnu.org/software/ncurses/)
 
+# Screenshot
+![screenshot](screenshots/screenshot.gif)
+
 # License
 This project is released under MIT License. Please review the [License file](LICENSE) for more details.
