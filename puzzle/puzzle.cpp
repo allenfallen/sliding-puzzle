@@ -10,7 +10,8 @@ puzzle::puzzle()
 
     // Puzzle settings
     dim = 3;
-    animateSolution = true;
+    instructionIndex = 0;
+    animateSolution = false;
     state = PRE_GAME;
 
     // Pointers to menu functions
@@ -67,21 +68,27 @@ void puzzle::preMenu()
     // Get input
     int input = getch();
 
-    // Right arrow
-    if(input == 67 && dim == 3)
-        dim++;
-
-    // Left arrow
-    else if(input == 68 && dim == 4)
-        --dim;
-
-    // Enter
-    else if(input == 10)
+    // Process input
+    switch(input)
     {
-        currState.setDim(dim);
-        generateRand();
-        state = IN_GAME;
-        erase();
+        // Right arrow
+        case 67:    if(dim == 3)
+                        dim++;
+                    break;
+
+        // Left arrow
+        case 68:    if(dim == 4)
+                        dim--;
+                    break;
+
+        // Enter
+        case 10:    currState.setDim(dim);
+                    generateRand();
+                    instructions.push_back(currState);
+                    state = IN_GAME;
+                    break;
+
+        default:    break;
     }
 }
 
@@ -103,28 +110,54 @@ void puzzle::inMenu()
     // Process input
     switch(input)
     {
+        // Up arrow
         case 65:    if(canMoveDown(currState))
+                    {
                         moveDown(currState);
+                        instructions.push_back(currState);
+                    }
                     break;
+
+        // Down arrow
         case 66:    if(canMoveUp(currState))
+                    {
                         moveUp(currState);
+                        instructions.push_back(currState);
+                    }
                     break;
+
+        // Right arrow
         case 67:    if(canMoveLeft(currState))
+                    {
                         moveLeft(currState);
+                        instructions.push_back(currState);
+                    }
                     break;
+
+        // Left arrow
         case 68:    if(canMoveRight(currState))
+                    {
                         moveRight(currState);
+                        instructions.push_back(currState);
+                    }
                     break;
+
+        // Enter
         case 10:    mvprintw(wRow/2 + 8, wCol/2 - 5, "%s", "Solving...");
                     refresh();
                     solve();
+                    animateSolution = true;
+                    instructionIndex = instructions.size()-1;
+                    state = POST_GAME;
                     break;
     }
 
     // Check for win
-    if(isGoal(currState) || !instructions.empty())
+    if(isGoal(currState))
     {
         state = POST_GAME;
+        instructionIndex = instructions.size()-1;
+        refresh();
         erase();
     }
 }
@@ -134,62 +167,67 @@ void puzzle::winMenu()
     // Print title
     mvprintw(wRow/9, wCol/2 - 7, "%s", "Sliding Puzzle");
 
-    // Solved automatically
-    if(!instructions.empty())
+    // Animate solution in the instruction vector
+    if(animateSolution)
     {
         // Animate solution
-        for(int i = instructions.size()-1; i > -1 && animateSolution; i--)
+        for(int i = 0; i < instructions.size(); i++)
         {
             // Print grid
             print(instructions[i]);
             refresh();
             usleep(100000);
 
-            // Adjust animation boolean and index
-            animateSolution = i;
-            instructionIndex = i;
-
             // Print index
-            mvprintw(wRow/2+2, wCol/2 - 5, "%i", instructions.size() - instructionIndex);
+            mvprintw(wRow/2+2, wCol/2 - 5, "%i", i+1);
             mvprintw(wRow/2+2, wCol/2 - 1, "%s", "/");
             mvprintw(wRow/2+2, wCol/2 + 2, "%i", instructions.size());
-        }
 
+            // Turn off animation when finished
+            animateSolution = instructions.size() - i - 1;
+        }
+    }
+
+    else
+    {
         // Print grid
         print(instructions[instructionIndex]);
 
         // Print index
-        mvprintw(wRow/2+2, wCol/2 - 5, "%i", instructions.size() - instructionIndex);
+        mvprintw(wRow/2+2, wCol/2 - 5, "%i", instructionIndex+1);
         mvprintw(wRow/2+2, wCol/2 - 1, "%s", "/");
         mvprintw(wRow/2+2, wCol/2 + 2, "%i", instructions.size());
 
         // Print instructions
-        mvprintw(wRow/2+4, wCol/2 - 25, "%s", "Press left/right arrow keys to navigate solution");
+        mvprintw(wRow/2+4, wCol/2 - 24, "%s", "Press left/right arrow keys to navigate solution");
         mvprintw(wRow/2+6, wCol/2 - 10, "%s", "Press enter to restart");
-    }
-    else
-    {
-        mvprintw(wRow/9, wCol/2 - 7, "%s", "You did it! Congratulations!");
-    }
 
-    // Get input
-    int input = getch();
+        // Get input
+        int input = getch();
 
-    // Process input
-    switch(input)
-    {
-        case 67:    if(instructionIndex > 0)
-                        instructionIndex--;
-                    break;
-        case 68:    if(instructionIndex < instructions.size()-1)
-                        instructionIndex++;
-                    break;
-        case 10:    clearGrid();
-                    currState.setDim(dim);
-                    generateRand();
-                    state = IN_GAME;
-                    clear();
-                    break;
+        // Process input
+        switch(input)
+        {
+            // Right arrow
+            case 67:    if(instructionIndex < instructions.size()-1)
+                            instructionIndex++;
+                        break;
+
+            // Left arrow
+            case 68:    if(instructionIndex > 0)
+                            instructionIndex--;
+                        break;
+
+            // Enter
+            case 10:    clearGrid();
+                        currState.setDim(dim);
+                        generateRand();
+                        instructions.push_back(currState);
+                        state = IN_GAME;
+                        clear();
+                        break;
+        }
+
     }
 }
 
@@ -306,6 +344,9 @@ void puzzle::decrementInversionCount()
 
 void puzzle::solve()
 {
+    // Clear instruction vector
+    instructions.clear();
+
     // Initial threshhold and f-score
     int threshhold = hammingDistance(currState) + manhattanDistance(currState) + 2*linearConflict(currState);
     int fScore = 1;
@@ -316,9 +357,6 @@ void puzzle::solve()
         fScore = search(currState, 0, threshhold);
         threshhold = fScore;
     }
-
-    // Change state
-    state = POST_GAME;
 }
 
 int puzzle::search(grid &g, int gScore, int threshhold)
@@ -337,7 +375,7 @@ int puzzle::search(grid &g, int gScore, int threshhold)
         grid* gridPtr = &g;
         while(gridPtr)
         {
-            instructions.push_back(*gridPtr);
+            instructions.insert(instructions.begin(), *gridPtr);
             gridPtr = gridPtr->parent;
         }
         return -1;
@@ -453,7 +491,7 @@ void puzzle::clearGrid()
         clearGrid(currState.child[i]);
     instructions.clear();
     instructionIndex = 0;
-    animateSolution = true;
+    animateSolution = false;
 }
 
 void puzzle::clearGrid(grid* &root)
