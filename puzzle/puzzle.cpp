@@ -145,6 +145,7 @@ void puzzle::inMenu()
         // Enter
         case 10:    mvprintw(wRow/2 + 8, wCol/2 - 5, "%s", "Solving...");
                     refresh();
+                    instructions.clear();
                     solve();
                     animateSolution = true;
                     instructionIndex = instructions.size()-1;
@@ -183,7 +184,8 @@ void puzzle::winMenu()
 
             // Turn off animation when finished
             animateSolution = instructions.size() - i - 1;
-
+            
+            // Delay and refresh
             usleep(100000);
             refresh();
             clear();
@@ -349,9 +351,6 @@ void puzzle::decrementInversionCount()
 
 void puzzle::solve()
 {
-    // Clear instruction vector
-    instructions.clear();
-
     // Initial threshhold and f-score
     int threshhold = hammingDistance(currState) + manhattanDistance(currState) + 2*linearConflict(currState);
     int fScore = 1;
@@ -404,6 +403,7 @@ int puzzle::search(grid &g, int gScore, int threshhold)
             // Is a unique child
             if(!g.parent || (g.parent && *g.child[i] != *g.parent))
             {
+                // Search child
                 int childFScore = search(*g.child[i], gScore+1, threshhold);
 
                 // Goal reached
