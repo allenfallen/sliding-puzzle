@@ -14,8 +14,6 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <string>
-
 // Grid
 #include "../grid/grid.h"
 
