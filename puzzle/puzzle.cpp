@@ -164,9 +164,6 @@ void puzzle::inMenu()
 
 void puzzle::winMenu()
 {
-    // Print title
-    mvprintw(wRow/9, wCol/2 - 7, "%s", "Sliding Puzzle");
-
     // Animate solution in the instruction vector
     if(animateSolution)
     {
@@ -175,9 +172,9 @@ void puzzle::winMenu()
         {
             // Print grid
             print(instructions[i]);
-            usleep(100000);
-            refresh();
-            clear();
+
+            // Print title
+            mvprintw(wRow/9, wCol/2 - 7, "%s", "Sliding Puzzle");
 
             // Print index
             mvprintw(wRow/2+2, wCol/2 - 5, "%i", i+1);
@@ -186,6 +183,10 @@ void puzzle::winMenu()
 
             // Turn off animation when finished
             animateSolution = instructions.size() - i - 1;
+
+            usleep(100000);
+            refresh();
+            clear();
         }
     }
 
@@ -194,6 +195,9 @@ void puzzle::winMenu()
         // Print grid
         print(instructions[instructionIndex]);
 
+        // Print title
+        mvprintw(wRow/9, wCol/2 - 7, "%s", "Sliding Puzzle");
+        
         // Print index
         mvprintw(wRow/2+2, wCol/2 - 5, "%i", instructionIndex+1);
         mvprintw(wRow/2+2, wCol/2 - 1, "%s", "/");
