@@ -175,8 +175,9 @@ void puzzle::winMenu()
         {
             // Print grid
             print(instructions[i]);
-            refresh();
             usleep(100000);
+            refresh();
+            clear();
 
             // Print index
             mvprintw(wRow/2+2, wCol/2 - 5, "%i", i+1);
